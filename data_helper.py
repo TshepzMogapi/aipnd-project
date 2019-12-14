@@ -1,6 +1,3 @@
-import model_helper
-import data_helper
-import argparse
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -11,24 +8,8 @@ from torchvision import datasets, transforms, models
 from PIL import Image
 
 
-def prepare_args():
-    
-    parser = argparse.ArgumentParser(description = 'Train model')
-    parser.add_argument('--data_dir', action='store', default='flowers', help='Directory for images')
-    # parser.add_argument('data_dir', nargs = '?', action = "store", default = "./flowers/")
-    parser.add_argument('--save_dir', dest = 'save_dir', nargs = '?', action = 'store', default = './checkpoint.pth')
-    parser.add_argument('--arch', dest = 'arch', nargs = '?', action = "store", default = 'vgg16')
-    parser.add_argument('--learning_rate', dest = 'lr', nargs='?', action="store", type = int, default=0.001)
-    parser.add_argument('--hidden_units', dest = 'hidden_units', nargs='?', action="store", type = int, default=500)
-    parser.add_argument('--epochs', dest = 'epochs', nargs='?', action="store", type = int, default=5)
-    parser.add_argument('--gpu', dest = 'gpu', nargs='?', action="store", default='GPU')
-    
-    return parser.parse_args()
-
-
-
 def load_data(data_dir = 'flowers'):
-    data_dir = prepare_args().data_dir
+#     data_dir = 
     train_dir = data_dir + '/train'
     valid_dir = data_dir + '/valid'
     test_dir = data_dir + '/test'
@@ -69,11 +50,43 @@ def load_data(data_dir = 'flowers'):
     test_loader = torch.utils.data.DataLoader(test_dataset, batch_size = bs)
 
 
+def process_image(image):
+    ''' Scales, crops, and normalizes a PIL image for a PyTorch model,
+        returns an Numpy array
+    '''
+    
+    # TODO: Process a PIL image for use in a PyTorch model
+    pil_image = Image.open(image)
+    
+    transform = transforms.Compose(
+        [transforms.Resize(255),
+         transforms.CenterCrop(224),
+         transforms.ToTensor(),
+         transforms.Normalize(
+             [0.485, 0.456, 0.406], 
+             [0.229, 0.224, 0.225])])
+    
+    return transform(pil_image)
 
 
-# train_loaders, vaild_loaders, test_loaders, class_to_idx = data_helper.load_data(data_dir)
-parsed_args = prepare_args()
-# data_dir = prepare_args().data_dir
-model, criterion, optimizer = model_helper.setup_model(structure = parsed_args().arch, dropout = 0.5, lr=0.001, power = prepare_args().gpu, hidden_layer = prepare_args().hidden_units)
-model_fuc.train_model(model, criterion, optimizer, train_loaders, vaild_loaders, power = gpu, epochs = epochs)
-model_fuc.save_model(class_to_idx, save_dir, model, arch, optimizer)
+
+def imshow(image, ax=None, title=None):
+    """Imshow for Tensor."""
+    if ax is None:
+        fig, ax = plt.subplots()
+    
+    # PyTorch tensors assume the color channel is the first dimension
+    # but matplotlib assumes is the third dimension
+    image = image.numpy().transpose((1, 2, 0))
+    
+    # Undo preprocessing
+    mean = np.array([0.485, 0.456, 0.406])
+    std = np.array([0.229, 0.224, 0.225])
+    image = std * image + mean
+    
+    # Image needs to be clipped between 0 and 1 or it looks like noise when displayed
+    image = np.clip(image, 0, 1)
+    
+    ax.imshow(image)
+    
+    return ax
